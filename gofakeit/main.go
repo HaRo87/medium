@@ -29,9 +29,9 @@ type Movie struct {
 	Length int    `json:"length"`
 }
 
-type WatchEvent struct {
+type Rating struct {
 	ID            string    `json:"id"`
-	EventType     string    `json:"type"`
+	Rating        int       `json:"rating"`
 	Time          time.Time `json:"time"`
 	MotionPicture Movie     `json:"movie"`
 	Watcher       User      `json:"user"`
@@ -41,75 +41,68 @@ type Flags struct {
 	numMovies      int
 	numGenres      int
 	numUsers       int
-	numEvents      int
+	numRatings     int
 	numMailDomains int
 	startDate      time.Time
 }
 
 const (
 	defaultNumUsers   = 100
-	defaultNumMovies  = 400
-	defaultNumGenres  = 50
-	defaultNumEvents  = 1000
-	defaultNumDomains = 300
+	defaultNumMovies  = 100
+	defaultNumGenres  = 20
+	defaultNumRatings = 1000
+	defaultNumDomains = 50
 	defaultDate       = "2020-01-01"
+	defaultOutputFile = "fake.json"
 )
 
 func main() {
 	var startTime string
+	var outputFile string
 	flags := Flags{}
 	flag.IntVar(&flags.numUsers, "users", defaultNumUsers, "Number of users to generate, default: "+strconv.Itoa(defaultNumUsers))
 	flag.IntVar(&flags.numMovies, "movies", defaultNumMovies, "Number of movies to generate, default: "+strconv.Itoa(defaultNumMovies))
 	flag.IntVar(&flags.numGenres, "genres", defaultNumGenres, "Number of movie genres to generate, default: "+strconv.Itoa(defaultNumGenres))
-	flag.IntVar(&flags.numEvents, "events", defaultNumEvents, "Number of events to generate, default: "+strconv.Itoa(defaultNumEvents))
+	flag.IntVar(&flags.numRatings, "ratings", defaultNumRatings, "Number of ratings to generate, default: "+strconv.Itoa(defaultNumRatings))
 	flag.IntVar(&flags.numMailDomains, "domains", defaultNumDomains, "Number of email domains to generate, default: "+strconv.Itoa(defaultNumDomains))
 	flag.StringVar(&startTime, "start", defaultDate, "Start date for all date elements, default: "+defaultDate)
+	flag.StringVar(&outputFile, "out", defaultOutputFile, "filename to store results, default: "+defaultOutputFile)
 	flag.Parse()
 	parsedDate, err := time.Parse("2006-01-02", startTime)
 	if err != nil {
 		panic(err)
 	}
 	flags.startDate = parsedDate
+	fmt.Println("Starting fake data generation for:")
+	fmt.Printf("ratings: %d, users: %d, movies: %d, genres: %d\n", flags.numRatings, flags.numUsers, flags.numMovies, flags.numGenres)
+	start := time.Now()
 	users := generateUsers(flags)
-	for i, user := range users {
-		if i == 5 {
-			break
-		}
-		fmt.Printf("user %d: %v", i, user)
-	}
 	movies := generateMovies(flags)
-	for i, movie := range movies {
-		if i == 5 {
-			break
-		}
-		fmt.Printf("movie %d: %v", i, movie)
-	}
-	events := generateEvents(flags, movies, users)
-	for i, event := range events {
-		if i == 5 {
-			break
-		}
-		fmt.Printf("event %d: %v", i, event)
-	}
-	eventsJson, _ := json.Marshal(events)
-	f, err := os.Create("output.json")
+	events := generateRatings(flags, movies, users)
+	fmt.Printf("generating took: %f sec\n", time.Since(start).Seconds())
+	fmt.Printf("storing in: %s\n", outputFile)
+	start = time.Now()
+	eventsJson, _ := json.MarshalIndent(events, "", "\t")
+	f, err := os.Create(outputFile)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 	f.Write(eventsJson)
+	fmt.Printf("storing took: %f sec\n", time.Since(start).Seconds())
 }
 
-func generateEvents(flags Flags, movies []Movie, users []User) (events []WatchEvent) {
+func generateRatings(flags Flags, movies []Movie, users []User) (events []Rating) {
 	endDate := time.Now()
-	events = make([]WatchEvent, flags.numEvents)
+	events = make([]Rating, flags.numRatings)
 	for i := range events {
-		events[i] = WatchEvent{
+		user := users[rand.Intn(len(users))]
+		events[i] = Rating{
 			ID:            gofakeit.UUID(),
-			EventType:     gofakeit.RandomString([]string{"started", "stopped"}),
-			Time:          gofakeit.DateRange(flags.startDate, endDate),
+			Rating:        gofakeit.RandomInt([]int{0, 1, 2, 3, 4, 5}),
+			Time:          gofakeit.DateRange(user.MemberSince, endDate),
 			MotionPicture: movies[rand.Intn(len(movies))],
-			Watcher:       users[rand.Intn(len(users))],
+			Watcher:       user,
 		}
 	}
 	return events
