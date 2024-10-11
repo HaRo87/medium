@@ -7,7 +7,7 @@ tasks:
   build-postgres-container:
     desc: Build the PostgreSQL image 
     status:
-      - '[ $(docker image ls {{.CONTAINER_NAME}} --format json | jq -r .CreatedAt | cut -f1 -d"+" | read created; echo $(( ($(date +%s) - $(date --date="$created" +%s) )/(60*60*24) ))) -gt -1 ]'
+      - 'docker image ls {{.CONTAINER_NAME}} --format json | jq -r .CreatedAt | cut -f1 -d"+" | read created; echo $(( ($(date +%s) - $(date --date="$created" +%s) )/(60*60*24) )) | read daysago; [ $daysago -lt -1 ]'
     cmds:
       - docker build --tag {{.CONTAINER_NAME}} . 
   
