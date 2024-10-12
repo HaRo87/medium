@@ -164,3 +164,8 @@ cython_debug/
 *.json
 
 faker
+
+!postgres/.env
+psql_data
+
+.DS_Store

@@ -4,14 +4,12 @@ vars:
   CONTAINER_NAME: local-postgres
 
 tasks:
-  build-postgres-container:
+  build-postgres-image:
     desc: Build the PostgreSQL image 
-    status:
-      - 'docker image ls {{.CONTAINER_NAME}} --format json | jq -r .CreatedAt | cut -f1 -d"+" | read created; echo $(( ($(date +%s) - $(date --date="$created" +%s) )/(60*60*24) )) | read daysago; [ $daysago -lt -1 ]'
     cmds:
       - docker build --tag {{.CONTAINER_NAME}} . 
   
-  build-postgres-container-no-cache:
+  build-postgres-image-no-cache:
     desc: Build the PostgreSQL image without cache
     cmds:
       - docker build --no-cache --tag {{.CONTAINER_NAME}} .
@@ -25,9 +23,10 @@ tasks:
       - |
         docker run -d -p 5432:5432 -v ./psql_data:/var/lib/psql/data \
         --name {{.CONTAINER_NAME}}_container \
-        -e  POSTGRES_USER=$PG_USER \
-        -e  POSTGRES_PASSWORD=$PG_PASSWORD \
-        -e  POSTGRES_DB=$PG_DATABASE \
+        -e  POSTGRES_USER=$PGUSER \
+        -e  POSTGRES_PASSWORD=$PGPASSWORD \
+        -e  POSTGRES_DB=$PGDATABASE \
+        -u $(id -u ${USER}):$(id -g ${USER}) \
         -t {{.CONTAINER_NAME}}
 
   stop-postgres:
