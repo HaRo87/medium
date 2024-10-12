@@ -7,12 +7,12 @@ tasks:
   build-postgres-image:
     desc: Build the PostgreSQL image 
     cmds:
-      - docker build --tag {{.CONTAINER_NAME}} . 
+      - docker build --tag {{.CONTAINER_NAME}} - < Dockerfile 
   
   build-postgres-image-no-cache:
     desc: Build the PostgreSQL image without cache
     cmds:
-      - docker build --no-cache --tag {{.CONTAINER_NAME}} .
+      - docker build --no-cache --tag {{.CONTAINER_NAME}} - < Dockerfile 
 
   run-postgres:
     desc: Run the `postgres` container
@@ -26,7 +26,6 @@ tasks:
         -e  POSTGRES_USER=$PGUSER \
         -e  POSTGRES_PASSWORD=$PGPASSWORD \
         -e  POSTGRES_DB=$PGDATABASE \
-        -u $(id -u ${USER}):$(id -g ${USER}) \
         -t {{.CONTAINER_NAME}}
 
   stop-postgres:
