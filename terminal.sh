@@ -1,0 +1,1 @@
+print("Terminal is awesome!")
